@@ -2,14 +2,12 @@ package sklcc.ws.util;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.log4j.net.SyslogAppender;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by sukai on 15/11/11.
@@ -19,7 +17,7 @@ public class TimeUtil {
     private static Logger logger = LogManager.getLogger(TimeUtil.class.getSimpleName());
 
     /*
-    返回startStr和endStr两者日期间的所有日期
+        返回startStr和endStr两者日期间的所有日期
      */
     public static List<Date> dateSplit(String startStr, String endStr) {
         List<Date> dateList = new ArrayList<Date>();
@@ -35,6 +33,8 @@ public class TimeUtil {
                     // 比上一天减一
                     dateList.add(new Date(dateList.get(i - 1).getTime() - (24 * 60 * 60 * 1000)));
                 }
+            } else if(startDate.equals(endDate)) {
+                dateList.add(startDate);
             }
         } catch (Exception e) {
             logger.error("dateSplit Error." + e.getMessage());
@@ -54,7 +54,7 @@ public class TimeUtil {
     }
 
     /*
-    返回两个日期间，所有的周六
+        返回两个日期间，所有的周六
      */
     public static List<Date> GetSaturDays(String startStr, String endStr) {
         List<Date> saturdays = new ArrayList<Date>();
@@ -103,24 +103,42 @@ public class TimeUtil {
         return startDT.getTime();
     }
 
+    /*
+        给定周六, 返回这周所有日期
+     */
+    public static List<Date> getWeekDates(Date saturDay) {
+        Date monDay = addDay(saturDay, -6);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return dateSplit(sdf.format(monDay), sdf.format(saturDay));
+    }
+
     public static void main(String[] args) throws Exception {
-        /*
-        List<Date> dates = dateSplit("2015-01-01", "2015-03-31");
+
+        List<Date> dates = dateSplit("2015-01-12", "2015-01-12");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         for(int i=0;i<dates.size();i++) {
-            System.out.println(dates.get(i));
+            System.out.println(sdf.format(dates.get(i)));
         }
-        */
+        /*
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date = sdf.parse("2015-12-26");
-        System.out.println(getCurWeekDayByStr(date));
+        System.out.println(getCurWeekDayByStr(date));*/
         /*List<Date> saturs = GetSaturDays("2015-01-01", "2015-02-28");
         System.out.println(saturs.size());
         for (int i=0;i<saturs.size();i++) {
             System.out.println(saturs.get(i));
-        }*/
+        }
+        */
+
         /*
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         System.out.println(sdf.format(addDay(getCurrentDate(), -1)));
+        */
+
+        /*
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = sdf.parse("2016-01-09");
+        getWeekDates(date);
         */
     }
 }

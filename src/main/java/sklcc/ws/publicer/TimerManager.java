@@ -17,14 +17,14 @@ public class TimerManager {
 
     public TimerManager() {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 12); //凌晨1点
+        calendar.set(Calendar.HOUR_OF_DAY, 12);
         calendar.set(Calendar.MINUTE, 30);
         calendar.set(Calendar.SECOND, 0);
         Date date = calendar.getTime(); //第一次执行定时任务的时间
         //如果第一次执行定时任务的时间小于当前的时间
         //此时要在第一次执行定时任务的时间加一天，以便此任务在下个时间点执行。如果不加一天，任务会立即执行。
         if (date.before(new Date())) {
-            date = TimeUtil.addDay(date, 1);
+            //date = TimeUtil.addDay(date, 1);
         }
         Timer timer = new Timer();
         this.publicerService = new PublicerService();

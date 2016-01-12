@@ -8,9 +8,10 @@ import sklcc.ws.dao.PublicerDao;
 import sklcc.ws.entity.Group;
 import sklcc.ws.entity.GroupPublicer;
 import sklcc.ws.util.Configuration;
+import sklcc.ws.util.TimeUtil;
 
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.TimerTask;
 
 /**
@@ -21,21 +22,10 @@ public class PublicerService extends TimerTask {
     private static Logger logger = LogManager.getLogger(PublicerService.class.getSimpleName());
 
     public void run() {
-        /*
-        logger.info("get origin publicers");
-        Map<String, String> pubs = PublicerDao.getOriginPubs();
-
-        for(String name: pubs.keySet()) {
-            PublicerJob job = new PublicerJob(name, pubs.get(name));
-            logger.info(name + " job begin");
-            job.run();
-            logger.info(name + " job over");
-        }
-        */
 
         logger.info("PublicerService begin");
         /*
-            数据抓取 任务
+            crawl data
         */
         if (Configuration.crawlFlag == 1) {
             List<GroupPublicer> groupPublicers = PublicerDao.getPubsFromApi();
@@ -48,8 +38,27 @@ public class PublicerService extends TimerTask {
             }
         }
 
+        /*
+            crawl week data
+         */
         if (Configuration.weekFlag == 1) {
-            logger.info("pubWeekTask begin");
+            logger.info("article week data task begin");
+            if (Configuration.switcher == 1) {
+                Date yestrDate = TimeUtil.addDay(TimeUtil.getCurrentDate(), -1);
+                if (TimeUtil.getCurWeekDayByStr(yestrDate) == 7) {
+                    List<Date> weekDates = TimeUtil.getWeekDates(yestrDate);
+                    List<GroupPublicer> groupPublicers = PublicerDao.getPubsFromApi();
+                    for (int i=0; i < groupPublicers.size(); i++) {
+                        PubArticleTask pubArticleTask = new PubArticleTask(groupPublicers.get(i));
+                        pubArticleTask.runBatchModel(weekDates);
+                    }
+                }
+            }
+            logger.info("article week data task end");
+
+            logger.info("Loading...");
+
+            logger.info("pub week data task begin");
             List<Group> groups = PublicerDao.getGroups();
             for (Group g: groups) {
                 PubWeekTask pubWeekTask = new PubWeekTask(g.getGroupId());
@@ -57,25 +66,28 @@ public class PublicerService extends TimerTask {
                 pubWeekTask.run();
                 logger.info("Group: " + g.getGroupId() + " weekJob Over");
             }
-            logger.info("pubWeekTask over");
+            logger.info("pub week task date over");
         }
 
         /*
-            数据清理任务
+            clean data
          */
         if (Configuration.cleanFlag == 1) {
             logger.info("Clean Task begin");
 
-            logger.info("ErrorFinder begin");
             ErrorFinder finder = new ErrorFinder();
-            finder.run();
-            logger.info("ErrorFinder over");
-
-            logger.info("CleanMain begin");
             CleanMain cMain = new CleanMain();
-            cMain.run();
-            logger.info("CleanMain over");
+            int errorCount = 1;
 
+            while (errorCount != 0) {
+                logger.info("ErrorFinder begin");
+                finder.run();
+                logger.info("ErrorFinder over");
+
+                logger.info("CleanMain begin");
+                errorCount = cMain.run();
+                logger.info("CleanMain over");
+            }
             logger.info("Clean Task begin");
         }
         logger.info("PublicerService over");

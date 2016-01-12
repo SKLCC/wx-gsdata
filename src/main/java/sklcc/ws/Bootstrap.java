@@ -24,10 +24,10 @@ public class Bootstrap {
         logger.info("mysqlIp " + Configuration.mysqlIp);
         logger.info("mysqlDB " + Configuration.mysqlDB);
         logger.info("switcher " + Configuration.switcher);
-        logger.info("beginDate " + Configuration.beginDate + ", endDate " + Configuration.endDate);
 
         if (Configuration.switcher == 2) {
             // Batch-Model
+            logger.info("beginDate " + Configuration.beginDate + ", endDate " + Configuration.endDate);
             logger.info("Batch Model begin");
 
             PublicerService pService = new PublicerService();

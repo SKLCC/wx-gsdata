@@ -165,7 +165,7 @@ public class CleanMain {
         dataDest.updateWSACleaner(c);
     }
 
-    public void run() {
+    public int run() {
         List<WSACleaner> cleaners = dataDest.getWSACleaners();
         logger.info("WSACleaners size: " + cleaners.size());
 
@@ -189,6 +189,7 @@ public class CleanMain {
         }
         logger.info("CleanMain job over");
         this.dataDest.disconnect();
+        return cleaners.size();
     }
 
     public static void main(String[] args) throws IOException {

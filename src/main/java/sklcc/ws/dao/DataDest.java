@@ -141,7 +141,6 @@ public class DataDest {
                                         + "official_account=?,"
                                         + "nickname=?,"
                                         + "type=?,"
-
                                         + "description=?,"
                                         + "authentication=?,"
                                         + "authentication_info=?,"
@@ -235,12 +234,12 @@ public class DataDest {
         /*
         insert into UserInfo(name, sex, idCard, location, birthday) values(?,?,?,?,?);
         private int id; // id int
-    private int statistics_id; // statistics_id int
-    private int statistics_type;// statistics_type int 1表示公众号，2表示文章
-    private String date;// date date 日期，表明是哪一天的数据
-    private String url_num_total;// article_count int
-    private String readnum_total;// read_count int （每日）阅读数
-    private String likenum_total;// like_count int (每日)点赞数
+        private int statistics_id; // statistics_id int
+        private int statistics_type;// statistics_type int 1表示公众号，2表示文章
+        private String date;// date date 日期，表明是哪一天的数据
+        private String url_num_total;// article_count int
+        private String readnum_total;// read_count int （每日）阅读数
+        private String likenum_total;// like_count int (每日)点赞数
          */
         try {
             PreparedStatement ps = connection
@@ -267,62 +266,106 @@ public class DataDest {
         }
     }
 
+    public boolean searchPubArticle(PubArticle article) {
+        boolean res = false;
+        try {
+            PreparedStatement ps = connection
+                    .prepareStatement("SELECT id FROM wsa_article WHERE id=?"
+                    );
+            ps.setString(1, article.getId());
+            ResultSet rs = ps.executeQuery();
+            //connection.commit();
+            if (rs.next()) {
+                res = true;
+            } else {
+                res = false;
+            }
+        } catch (SQLException e) {
+            logger.error("searchPubArticle Error: " + e.getMessage());
+        }
+        return res;
+    }
+
     public void addPubArticle(PubArticle article) {
         /*
         private int nickname_id;// official_account_id varchar unique not null 公众号账号表中的id
-    private String posttime;// publish_time datetime 文章发布时间
-    private String title;// title varchar 文章标题
-    private String content;// summary varchar 文章摘要
-    // content text 文章正文
-    private String url;// url varchar 文章地址
-    private String add_time;// add_time datetime 文章存入数据库时间
-    private String get_time;// statistics_get_time datetime 文章获取时间
-    private int readnum;// read_count int 文章阅读总数
-    private int likenum;// like_count int 文章点赞总数
-    private int top;// ranking int 文章当天推送位置排行，1为头条，其他为位置顺序
-    private String sourceurl;// source_url varchar 原文地址
-    private String author;// author varchar 微信文章作者
-    private String copyright;// copyright int 原创|非原创|未知
+        private String posttime;// publish_time datetime 文章发布时间
+        private String title;// title varchar 文章标题
+        private String content;// summary varchar 文章摘要
+        // content text 文章正文
+        private String url;// url varchar 文章地址
+        private String add_time;// add_time datetime 文章存入数据库时间
+        private String get_time;// statistics_get_time datetime 文章获取时间
+        private int readnum;// read_count int 文章阅读总数
+        private int likenum;// like_count int 文章点赞总数
+        private int top;// ranking int 文章当天推送位置排行，1为头条，其他为位置顺序
+        private String sourceurl;// source_url varchar 原文地址
+        private String author;// author varchar 微信文章作者
+        private String copyright;// copyright int 原创|非原创|未知
          */
-        try {
-            PreparedStatement ps = connection
-                    .prepareStatement("INSERT INTO wsa_article(id,official_account_id,publish_time,title,summary,url,add_time,statistics_get_time," +
-                                    "read_count,like_count,ranking,source_url,author,copyright,read_count_week,like_count_week) "
-                                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-                    );
-            ps.setString(1, article.getId());
-            ps.setInt(2, article.getNickname_id());
-            ps.setTimestamp(3, Timestamp.valueOf(article.getPosttime()));
-            ps.setString(4, article.getTitle());
-            ps.setString(5, article.getContent());
-            ps.setString(6, article.getUrl());
-            //logger.info(article.getAdd_time());
-            ps.setTimestamp(7, Timestamp.valueOf(article.getAdd_time()));
-            Timestamp t = Timestamp.valueOf("1900-1-1 00:00:00");
+        if (searchPubArticle(article)) {
             try {
-                t = Timestamp.valueOf(article.getGet_time());
-            } catch (Exception timeE) {
-                logger.error(article.getGet_time() + "get time trans Error.");
+                PreparedStatement ps = connection
+                        .prepareStatement("UPDATE wsa_article SET " + "read_count_week=?,"
+                                + "like_count_week=? "
+                                +"WHERE id=?"
+                        );
+                ps.setInt(1, article.getWeekreadnum());
+                ps.setInt(2, article.getWeeklikenum());
+                ps.setString(3, article.getId());
+                ps.executeUpdate();
+                connection.commit();
+                logger.info("updatePubArticle success");
+            } catch (SQLException e) {
+                logger.error("updatePubArticle Error: " + e.getMessage());
+                try {
+                    if (connection != null)
+                        connection.rollback();
+                } catch (SQLException e1) {
+                    logger.error("RollBack Error: " + e1.getMessage());
+                }
             }
-            ps.setTimestamp(8, t);
-            ps.setInt(9, article.getReadnum());
-            ps.setInt(10, article.getLikenum());
-            ps.setInt(11, article.getTop());
-            ps.setString(12, article.getSourceurl());
-            ps.setString(13, article.getAuthor());
-            ps.setString(14, article.getCopyright());
-            ps.setInt(15, article.getWeekreadnum());
-            ps.setInt(16, article.getWeeklikenum());
-            ps.execute();
-            connection.commit();
-            logger.info("addPubArticle success");
-        } catch (SQLException e) {
-            logger.error("addPubArticle Error: " + e.getMessage());
+        } else {
             try {
-                if (connection != null)
-                    connection.rollback();
-            } catch (SQLException e1) {
-                logger.error("RollBack Error: " + e1.getMessage());
+                PreparedStatement ps = connection
+                        .prepareStatement("INSERT INTO wsa_article(id,official_account_id,publish_time,title,summary,url,add_time,statistics_get_time," +
+                                "read_count,like_count,ranking,source_url,author,copyright,read_count_week,like_count_week) "
+                                + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+                        );
+                ps.setString(1, article.getId());
+                ps.setInt(2, article.getNickname_id());
+                ps.setTimestamp(3, Timestamp.valueOf(article.getPosttime()));
+                ps.setString(4, article.getTitle());
+                ps.setString(5, article.getContent());
+                ps.setString(6, article.getUrl());
+                //logger.info(article.getAdd_time());
+                ps.setTimestamp(7, Timestamp.valueOf(article.getAdd_time()));
+                Timestamp t = Timestamp.valueOf("1900-1-1 00:00:00");
+                try {
+                    t = Timestamp.valueOf(article.getGet_time());
+                } catch (Exception timeE) {
+                    logger.error(article.getGet_time() + "get time trans Error.");
+                }
+                ps.setTimestamp(8, t);
+                ps.setInt(9, article.getReadnum());
+                ps.setInt(10, article.getLikenum());
+                ps.setInt(11, article.getTop());
+                ps.setString(12, article.getSourceurl());
+                ps.setString(13, article.getAuthor());
+                ps.setString(14, article.getCopyright());
+                ps.setInt(15, article.getWeekreadnum());
+                ps.setInt(16, article.getWeeklikenum());
+                ps.execute();
+                connection.commit();
+                logger.info("addPubArticle success");
+            } catch (SQLException e) {
+                logger.error("addPubArticle Error: " + e.getMessage());
+                try {
+                    if (connection != null)
+                        connection.rollback();
+                } catch (SQLException e1) {
+                    logger.error("RollBack Error: " + e1.getMessage());
+                }
             }
         }
     }
@@ -363,13 +406,13 @@ public class DataDest {
         try {
             PreparedStatement ps = connection
                     .prepareStatement("INSERT INTO wsa_weekly_statistics(official_account_id,date,push_times," +
-                                    "top_article_readnum,top_article_readnum_change," +
-                                    "article_count,article_count_change,article_count_10w," +
-                                    "article_count_10w_change,total_readnum,total_readnum_change,ave_readnum," +
-                                    "ave_readnum_change,total_likenum,total_likenum_change,ave_likenum,ave_likenum_change," +
-                                    "max_readnum,max_likenum,like_rate,ranking,ranking_change,WCI,WCI_UP)"
-                                    + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-                    );
+                    "top_article_readnum,top_article_readnum_change," +
+                    "article_count,article_count_change,article_count_10w," +
+                    "article_count_10w_change,total_readnum,total_readnum_change,ave_readnum," +
+                    "ave_readnum_change,total_likenum,total_likenum_change,ave_likenum,ave_likenum_change," +
+                    "max_readnum,max_likenum,like_rate,ranking,ranking_change,WCI,WCI_UP)"
+                    + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            );
             ps.setInt(1, pubWeek.getNickname_id());
             ps.setDate(2, Date.valueOf(pubWeek.getDate()));
             ps.setInt(3, pubWeek.getUrl_times());
@@ -429,6 +472,7 @@ public class DataDest {
             ps.setInt(5, type);
             ps.executeUpdate();
             connection.commit();
+            //logger.info("writeWSACleaner Ok: " + pub.getWx_name() + " " + pub.getWx_nickname() + " " + dateStr);
         } catch (SQLException e) {
             logger.error("writeWSACleaner Error." + e.getMessage());
         }
@@ -438,7 +482,7 @@ public class DataDest {
     public List<WSACleaner> getWSACleaners() {
         List<WSACleaner> cleaners = new ArrayList<WSACleaner>();
         try {
-            PreparedStatement ps = connection.prepareStatement("SELECT wx_name, wx_nickname, date, type, id FROM wsa_clean");
+            PreparedStatement ps = connection.prepareStatement("SELECT wx_name, wx_nickname, date, type, id FROM wsa_clean  where type=1 or type=2 or type=3");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 WSACleaner c = new WSACleaner();
@@ -472,12 +516,12 @@ public class DataDest {
     public void updatePubDaily(PubDaily pubDaily) {
         try {
             PreparedStatement ps = connection
-                    .prepareStatement("UPDATE wsa_daily_statistics SET read_count=?, like_count=?, article_count=? WHERE statistics_id=? AND date=?");
+                    .prepareStatement("UPDATE wsa_daily_statistics SET read_count= ?, like_count= ?, article_count=? WHERE statistics_id =? AND date= ? ");
             ps.setInt(1, pubDaily.getReadnum_total());
             ps.setInt(2, pubDaily.getLikenum_total());
             ps.setInt(3, pubDaily.getUrl_num_total());
-            ps.setInt(4, pubDaily.getStatistics_id());
-            ps.setDate(5, Date.valueOf(pubDaily.getDate()));
+            ps.setString(4, String.valueOf(pubDaily.getStatistics_id()));
+            ps.setString(5, pubDaily.getDate());
             ps.executeUpdate();
             connection.commit();
         } catch (SQLException e) {

@@ -42,29 +42,10 @@ public class PubArticleTask {
 
     public void run() {
         if (Configuration.switcher == 2) {
+
             List<Date> dateList = TimeUtil.dateSplit(Configuration.beginDate, Configuration.endDate);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            for (Date e: dateList) {
-                String eStr = sdf.format(e);
-                this.params.put("postdate", eStr);
-                logger.info(eStr + " :" + this.params);
-                JSONObject pubJson = HttpPostFetcher.fetch(this.fetchUrl, this.params);
-                if (pubJson == null) {
-                    logger.error(this.params + " get json data null from api");
-                    continue;
-                }
-                List<PubArticle> pubArticles = JsonUtil.getPubArticles(pubJson);
-                if (pubArticles != null) {
-                    this.dataDest.addPubArticles(pubArticles);
-                }
-                try {
-                    // remember to remove signature
-                    this.params.remove("signature");
-                    // Thread.sleep(5000);
-                } catch (Exception ee) {
-                    logger.error("sleep Error. " + ee.getMessage());
-                }
-            }
+            runBatchModel(dateList);
+
         } else if (Configuration.switcher == 1){
             Date yestrDate = TimeUtil.addDay(TimeUtil.getCurrentDate(), -1);
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -83,6 +64,31 @@ public class PubArticleTask {
             }
         }
         this.dataDest.disconnect();
+    }
+
+    public void runBatchModel(List<Date> dateList) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        for (Date e: dateList) {
+            String eStr = sdf.format(e);
+            this.params.put("postdate", eStr);
+            logger.info(eStr + " :" + this.params);
+            JSONObject pubJson = HttpPostFetcher.fetch(this.fetchUrl, this.params);
+            if (pubJson == null) {
+                logger.error(this.params + " get json data null from api");
+                continue;
+            }
+            List<PubArticle> pubArticles = JsonUtil.getPubArticles(pubJson);
+            if (pubArticles != null) {
+                this.dataDest.addPubArticles(pubArticles);
+            }
+            try {
+                // remember to remove signature
+                this.params.remove("signature");
+                // Thread.sleep(5000);
+            } catch (Exception ee) {
+                logger.error("sleep Error. " + ee.getMessage());
+            }
+        }
     }
 }
 

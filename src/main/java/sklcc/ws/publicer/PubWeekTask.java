@@ -55,7 +55,7 @@ public class PubWeekTask {
                     logger.error("sleep Error. " + ee.getMessage());
                 }
             }
-        } else if (Configuration.switcher == 1){
+        } else if (Configuration.switcher == 1) {
             Date yestrDate = TimeUtil.addDay(TimeUtil.getCurrentDate(), -1);
             if (TimeUtil.getCurWeekDayByStr(yestrDate) == 7) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

@@ -3,6 +3,7 @@ package sklcc.ws.publicer;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import sklcc.ws.entity.GroupPublicer;
+
 /**
  * Created by sukai on 15/11/10.
  */
