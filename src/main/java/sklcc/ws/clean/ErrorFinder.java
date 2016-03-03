@@ -21,15 +21,9 @@ public class ErrorFinder {
 
     private static Logger logger = LogManager.getLogger(ErrorFinder.class.getSimpleName());
     public DataDest dataDest;
-    /*
-    private static int[] months = {0,1,2,3,4,5,6,7,8,9,10,11,12};
-    private static int[] days = {0,31,28,31,30,31,30,31,31,30,31,30,31};
-    */
-    //private int errorCount;
 
     public ErrorFinder() {
         this.dataDest = new DataDest();
-        //errorCount = 0;
     }
 
     public boolean check(Publicer p, String dateStr) {
@@ -38,18 +32,18 @@ public class ErrorFinder {
         PubDaily pubDaily = this.dataDest.readPubDaily(p.getId(), dateStr);
         if (pubDaily == null) {
             this.dataDest.writeWSACleaner(p, dateStr, 2);
-            //this.errorCount++;
             return res;
         }
 
         List<PubArticle> pubArticles = this.dataDest.readPubArticles(p.getId(), dateStr);
         if (pubArticles == null) {
             this.dataDest.writeWSACleaner(p, dateStr, 3);
-            //this.errorCount++;
             return res;
         }
 
+
         if (pubDaily.getUrl_num_total() != pubArticles.size()) {
+            logger.info("文章数量错误: " + pubDaily.getUrl_num_total() + " " + pubArticles.size());
             res = false;
             return res;
         }
@@ -58,16 +52,19 @@ public class ErrorFinder {
         int like_count = 0;
 
         for (int i=0; i<pubArticles.size(); i++) {
+            //logger.info(pubArticles.get(i).getReadnum() + " " + pubArticles.get(i).getLikenum());
             read_count += pubArticles.get(i).getReadnum();
             like_count += pubArticles.get(i).getLikenum();
         }
 
         if ((read_count != pubDaily.getReadnum_total()) || (like_count != pubDaily.getLikenum_total())) {
+            logger.info("阅读和点赞错误: ");
+            logger.info(pubDaily.getReadnum_total() + " " + pubDaily.getLikenum_total());
+            logger.info(read_count + " " + like_count);
             res = false;
             return res;
-        } else {
-            return res;
         }
+        return res;
     }
 
     public void run() {
@@ -90,7 +87,6 @@ public class ErrorFinder {
                 boolean result = check(p, eStr);
                 if (result == false) {
                     this.dataDest.writeWSACleaner(p, eStr, 1);
-                    //this.errorCount++;
                 }
             }
         }

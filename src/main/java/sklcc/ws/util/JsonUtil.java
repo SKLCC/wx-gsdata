@@ -50,17 +50,28 @@ public class JsonUtil {
                 if (retData.has("wx_city")) {
                     publicer.setWx_city(retData.getString("wx_city"));
                 }
-                publicer.setWx_title(retData.getString("wx_title"));
-                publicer.setWx_url(retData.getString("wx_url"));
-                publicer.setWx_url_posttime(retData.getString("wx_url_posttime"));
+                if (retData.has("wx_title")) {
+                    publicer.setWx_title(retData.getString("wx_title"));
+                }
+                if (retData.has("wx_url")) {
+                    publicer.setWx_url(retData.getString("wx_url"));
+                }
+                if (retData.has("wx_url_posttime")) {
+                    publicer.setWx_url_posttime(retData.getString("wx_url_posttime"));
+                }
                 if (retData.has("update_time")) {
                     publicer.setUpdate_time(retData.getString("update_time"));
                 }
-                publicer.setUpdate_status(retData.getInt("update_status"));
-                publicer.setStatus(retData.getInt("status"));
+                if (retData.has("update_status")) {
+                    publicer.setUpdate_status(retData.getInt("update_status"));
+                }
+                if (retData.has("status")) {
+                    publicer.setStatus(retData.getInt("status"));
+                }
                 logger.info("getPublicer success.");
             } catch (JSONException e) {
                 logger.error("getPublicer Error. " + e.getMessage() + ": " + pubJson);
+                return null;
             }
         }
         return publicer;
@@ -92,6 +103,7 @@ public class JsonUtil {
                 logger.info("getPubDaily success.");
             } catch (JSONException e) {
                 logger.error("getPubDaily Error. " + e.getMessage() + " " + dateStr +": " + pubJson);
+                return null;
             }
         }
         return pubDaily;
@@ -137,6 +149,7 @@ public class JsonUtil {
                 logger.info("getPubArticles success.");
             } catch (JSONException e) {
                 logger.error("getPubArticles Error. " + e.getMessage() + ": " + pubJson);
+                return null;
             }
         }
         return pubArticles;
@@ -191,6 +204,7 @@ public class JsonUtil {
                 logger.info("getPubWeeks success.");
             } catch (JSONException e) {
                 logger.error("getPubWeeks Error. " + e.getMessage() + ": " + pubJson);
+                return null;
             }
         }
         return pubWeeks;
@@ -203,26 +217,31 @@ public class JsonUtil {
         }
         List<GroupPublicer> groupPublicers = new ArrayList<GroupPublicer>();
         if (pubJson.getString("returnCode").equals("1001")) {
-            JSONObject returnData = pubJson.getJSONObject("returnData");
-            int groupSize = returnData.getInt("groupsize");
-            JSONArray lists = returnData.getJSONArray("list");
-            for(int i=0; i<groupSize; i++){
-                JSONObject group = lists.getJSONObject(i);
-                int num = group.getInt("num");
-                logger.info("fetch: " + group.getInt("groupid") + " " + group.getString("groupname") + " " + num);
+            try {
+                JSONObject returnData = pubJson.getJSONObject("returnData");
+                int groupSize = returnData.getInt("groupsize");
+                JSONArray lists = returnData.getJSONArray("list");
+                for(int i=0; i<groupSize; i++){
+                    JSONObject group = lists.getJSONObject(i);
+                    int num = group.getInt("num");
+                    logger.info("fetch: " + group.getInt("groupid") + " " + group.getString("groupname") + " " + num);
                 /*if (group.getInt("groupid") != 33516) {
                     continue;
                 }*/
-                JSONArray nicknames =group.getJSONArray("nicknames");
-                for (int j=0; j<num; j++) {
-                    JSONObject pub = nicknames.getJSONObject(j);
-                    GroupPublicer groupPublicer = new GroupPublicer();
-                    groupPublicer.setGroupId(pub.getInt("group_id"));
-                    groupPublicer.setNicknameId(pub.getInt("nickname_id"));
-                    groupPublicer.setWx_nickname(pub.getString("wx_nickname"));
-                    groupPublicer.setWx_name(pub.getString("wx_name"));
-                    groupPublicers.add(groupPublicer);
+                    JSONArray nicknames =group.getJSONArray("nicknames");
+                    for (int j=0; j<num; j++) {
+                        JSONObject pub = nicknames.getJSONObject(j);
+                        GroupPublicer groupPublicer = new GroupPublicer();
+                        groupPublicer.setGroupId(pub.getInt("group_id"));
+                        groupPublicer.setNicknameId(pub.getInt("nickname_id"));
+                        groupPublicer.setWx_nickname(pub.getString("wx_nickname"));
+                        groupPublicer.setWx_name(pub.getString("wx_name"));
+                        groupPublicers.add(groupPublicer);
+                    }
                 }
+            } catch (JSONException e) {
+                logger.error("getPubsFromApi Error. " + e.getMessage() + ": " + pubJson);
+                return null;
             }
         }
         return groupPublicers;
@@ -235,16 +254,21 @@ public class JsonUtil {
         }
         List<Group> groups = new ArrayList<Group>();
         if (groupJson.getString("returnCode").equals("1001")) {
-            JSONObject returnData = groupJson.getJSONObject("returnData");
-            int groupCount = returnData.getInt("groupCount");
-            JSONArray lists = returnData.getJSONArray("groupList");
-            for(int i=0; i<groupCount; i++){
-                JSONObject group = lists.getJSONObject(i);
-                Group t = new Group();
-                t.setGroupId(group.getInt("groupid"));
-                t.setGroupName(group.getString("groupname"));
-                t.setNum(group.getInt("count"));
-                groups.add(t);
+            try {
+                JSONObject returnData = groupJson.getJSONObject("returnData");
+                int groupCount = returnData.getInt("groupCount");
+                JSONArray lists = returnData.getJSONArray("groupList");
+                for(int i=0; i<groupCount; i++){
+                    JSONObject group = lists.getJSONObject(i);
+                    Group t = new Group();
+                    t.setGroupId(group.getInt("groupid"));
+                    t.setGroupName(group.getString("groupname"));
+                    t.setNum(group.getInt("count"));
+                    groups.add(t);
+                }
+            } catch (JSONException e) {
+                logger.error("getGroupInfos Error. " + e.getMessage() + ": " + groupJson);
+                return null;
             }
         }
         return groups;

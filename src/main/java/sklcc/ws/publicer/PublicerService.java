@@ -25,25 +25,32 @@ public class PublicerService extends TimerTask {
 
         logger.info("PublicerService begin");
         /*
-            crawl data
+            crawl data task
         */
         if (Configuration.crawlFlag == 1) {
             List<GroupPublicer> groupPublicers = PublicerDao.getPubsFromApi();
             logger.info("Get GroupPubs:" + groupPublicers.size());
             for (int i=0; i < groupPublicers.size(); i++) {
                 PublicerJob job = new PublicerJob(groupPublicers.get(i));
-                logger.info(i + "th " + groupPublicers.get(i).getWx_name() + " job begin");
-                job.run();
-                logger.info(groupPublicers.get(i).getWx_name() + " job over");
+                //logger.info(i + "th " + groupPublicers.get(i).getWx_name() + " job begin");
+                if (groupPublicers.get(i).getWx_name().equals("xhjzhoukan") || groupPublicers.get(i).getWx_name().equals("szmbjygzh")) {
+                    logger.info("fuck: " + i + " " + groupPublicers.get(i).getNicknameId() + " " + groupPublicers.get(i).getWx_name());
+                    job.run();
+                }
+                //job.run();
+                //logger.info(groupPublicers.get(i).getWx_name() + " job over");
             }
         }
 
         /*
-            crawl week data
+            crawl week data task
          */
         if (Configuration.weekFlag == 1) {
-            logger.info("article week data task begin");
+
+            // Day-Model下更新文章周阅读和点赞数
+            // 待解决??何时启动该任务,周日12:30还是周六还是周一
             if (Configuration.switcher == 1) {
+                logger.info("Day-Model: article week data task begin");
                 Date yestrDate = TimeUtil.addDay(TimeUtil.getCurrentDate(), -1);
                 if (TimeUtil.getCurWeekDayByStr(yestrDate) == 7) {
                     List<Date> weekDates = TimeUtil.getWeekDates(yestrDate);
@@ -53,8 +60,8 @@ public class PublicerService extends TimerTask {
                         pubArticleTask.runBatchModel(weekDates);
                     }
                 }
+                logger.info("Day-Model: article week data task end");
             }
-            logger.info("article week data task end");
 
             logger.info("Loading...");
 
@@ -65,12 +72,13 @@ public class PublicerService extends TimerTask {
                 logger.info("Group: " + g.getGroupId() + " weekJob Begin");
                 pubWeekTask.run();
                 logger.info("Group: " + g.getGroupId() + " weekJob Over");
+
             }
             logger.info("pub week task date over");
         }
 
         /*
-            clean data
+            clean data task
          */
         if (Configuration.cleanFlag == 1) {
             logger.info("Clean Task begin");

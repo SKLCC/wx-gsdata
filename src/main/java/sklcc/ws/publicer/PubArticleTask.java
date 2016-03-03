@@ -84,7 +84,7 @@ public class PubArticleTask {
             try {
                 // remember to remove signature
                 this.params.remove("signature");
-                // Thread.sleep(5000);
+                Thread.sleep(1000);
             } catch (Exception ee) {
                 logger.error("sleep Error. " + ee.getMessage());
             }

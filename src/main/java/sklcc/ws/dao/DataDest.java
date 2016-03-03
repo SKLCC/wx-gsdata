@@ -168,16 +168,17 @@ public class DataDest {
                 ps.setString(11, pub.getWx_title());
                 ps.setString(12, pub.getWx_url());
                 // String to datetime
-                ps.setTimestamp(13, Timestamp.valueOf(pub.getWx_url_posttime()));
+                if (pub.getWx_url_posttime() != null) {
+                    ps.setTimestamp(13, Timestamp.valueOf(pub.getWx_url_posttime()));
+                } else {
+                    ps.setTimestamp(13, Timestamp.valueOf("1900-1-1 00:00:00"));
+                }
                 Timestamp t = Timestamp.valueOf("1900-1-1 00:00:00");
                 if (pub.getUpdate_time() != null) {
-                    try {
-                        t = Timestamp.valueOf(pub.getUpdate_time());
-                    } catch (Exception timeE) {
-                        logger.error(pub.getUpdate_time() + " get time trans Error.");
-                    }
+                    ps.setTimestamp(14, Timestamp.valueOf(pub.getUpdate_time()));
+                } else {
+                    ps.setTimestamp(14, Timestamp.valueOf("1900-1-1 00:00:00"));
                 }
-                ps.setTimestamp(14, t);
                 ps.setInt(15, pub.getUpdate_status());
                 ps.setInt(16, pub.getId());
                 ps.executeUpdate();
@@ -205,14 +206,16 @@ public class DataDest {
                 ps.setString(12, pub.getWx_title());
                 ps.setString(13, pub.getWx_url());
                 // String to datetime
-                ps.setTimestamp(14, Timestamp.valueOf(pub.getWx_url_posttime()));
-                Timestamp t = Timestamp.valueOf("1900-1-1 00:00:00");
-                try {
-                    t = Timestamp.valueOf(pub.getUpdate_time());
-                } catch (Exception timeE) {
-                    logger.error(pub.getUpdate_time() + "update time trans Error.");
+                if (pub.getWx_url_posttime() != null) {
+                    ps.setTimestamp(14, Timestamp.valueOf(pub.getWx_url_posttime()));
+                } else {
+                    ps.setTimestamp(14, Timestamp.valueOf("1900-1-1 00:00:00"));
                 }
-                ps.setTimestamp(15, t);
+                if (pub.getUpdate_time() != null) {
+                    ps.setTimestamp(15, Timestamp.valueOf(pub.getUpdate_time()));
+                } else {
+                    ps.setTimestamp(15, Timestamp.valueOf("1900-1-1 00:00:00"));
+                }
                 ps.setInt(16, pub.getUpdate_status());
                 ps.setInt(17, pub.getId());
                 ps.executeUpdate();
@@ -398,7 +401,8 @@ public class DataDest {
     public void addPubArticles(List<PubArticle> pubArticles) {
         for (PubArticle article: pubArticles) {
             addPubArticle(article);
-            addArticleDaily(article);
+            // 数据库表 冗余, 舍弃存储
+            //addArticleDaily(article);
         }
     }
 
@@ -472,9 +476,15 @@ public class DataDest {
             ps.setInt(5, type);
             ps.executeUpdate();
             connection.commit();
-            //logger.info("writeWSACleaner Ok: " + pub.getWx_name() + " " + pub.getWx_nickname() + " " + dateStr);
+            logger.info("writeWSACleaner Ok: " + pub.getWx_name() + " " + pub.getWx_nickname() + " " + dateStr);
         } catch (SQLException e) {
             logger.error("writeWSACleaner Error." + e.getMessage());
+            try {
+                if (connection != null)
+                    connection.rollback();
+            } catch (SQLException e1) {
+                logger.error("RollBack Error: " + e1.getMessage());
+            }
         }
         return;
     }
@@ -502,14 +512,21 @@ public class DataDest {
 
     public void updateWSACleaner(WSACleaner c) {
         try {
-            PreparedStatement ps = connection.prepareStatement("UPDATE wsa_clean SET type = ? WHERE wx_name = ? AND date = ?");
+            PreparedStatement ps = connection.prepareStatement("UPDATE wsa_clean SET type = ? WHERE id = ? AND date = ?");
             ps.setInt(1, c.getType());
-            ps.setString(2, c.getWx_name());
+            ps.setInt(2, c.getId());
+            //ps.setString(2, c.getWx_name());
             ps.setString(3, c.getDate());
             ps.executeUpdate();
             connection.commit();
         } catch (SQLException e) {
             logger.error("updateWSACleaner Error." + e.getMessage());
+            try {
+                if (connection != null)
+                    connection.rollback();
+            } catch (SQLException e1) {
+                logger.error("RollBack Error: " + e1.getMessage());
+            }
         }
     }
 
@@ -572,7 +589,7 @@ public class DataDest {
     public void updatePubArticles(List<PubArticle> pubArticles) {
         for (PubArticle article: pubArticles) {
             deletePubArticle(article);
-            deleteArticleDaily(article);
+            //deleteArticleDaily(article);
         }
         addPubArticles(pubArticles);
     }
@@ -617,12 +634,14 @@ public class DataDest {
             ResultSet rs = ps.executeQuery();
             //connection.commit();
             while (rs.next()) {
+                //logger.info(id + " " + dateStr + " find one");
                 flag = true;
                 PubArticle pubArticle = new PubArticle();
                 pubArticle.setReadnum(rs.getInt("read_count"));
                 pubArticle.setLikenum(rs.getInt("like_count"));
                 pubArticle.setNickname_id(id);
                 pubArticle.setPosttime(dateStr);
+                pubArticles.add(pubArticle);
             }
         } catch (SQLException e) {
             logger.error("redPubArticles Error: " + e.getMessage());

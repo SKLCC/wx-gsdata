@@ -114,15 +114,16 @@ public class TimeUtil {
 
     public static void main(String[] args) throws Exception {
 
+        /*
         List<Date> dates = dateSplit("2015-01-12", "2015-01-12");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         for(int i=0;i<dates.size();i++) {
             System.out.println(sdf.format(dates.get(i)));
         }
-        /*
+        */
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date date = sdf.parse("2015-12-26");
-        System.out.println(getCurWeekDayByStr(date));*/
+        Date date = sdf.parse("2015-02-21");
+        System.out.println(getCurWeekDayByStr(date));
         /*List<Date> saturs = GetSaturDays("2015-01-01", "2015-02-28");
         System.out.println(saturs.size());
         for (int i=0;i<saturs.size();i++) {
